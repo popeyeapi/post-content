@@ -1,0 +1,46 @@
+version: '3'
+services:
+  my-node-app:
+    image: node:latest
+    working_dir: /usr/src/app
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/usr/src/app
+    command: ["node", "./dist/src/index.js"]
+    depends_on:
+      - prisma
+
+  sql-server:
+    image: mcr.microsoft.com/mssql/server:latest
+    ports:
+      - "1433:1433"
+    container_name: sql-server-container
+    environment:
+      SA_PASSWORD: "YourStrong!Passw0rd"
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Express"
+      MSSQL_DATABASE: "your_database_name"
+    volumes:
+      - sqlserverdata:/var/opt/mssql
+
+  prisma:
+    image: prismagraphql/prisma:2.29
+    ports:
+      - "4466:4466"
+    environment:
+      PRISMA_CONFIG: |
+        port: 4466
+        databases:
+          default:
+            connector: sqlserver
+            host: sql-server
+            port: 1433
+            user: sa
+            password: "YourStrong!Passw0rd" 
+            database: "your_database_name" 
+            rawAccess: true # If needed
+            migrations: true # If needed
+
+volumes:
+  sqlserverdata:

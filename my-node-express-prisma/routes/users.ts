@@ -1,6 +1,6 @@
 import express from 'express';
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 const router = express.Router();
@@ -19,9 +19,15 @@ router.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', async (req, res) => {
   try {
-    const users = await prisma.user.findMany();
+    const response = await fetch('https://jsonplaceholder.typicode.com/users');
+    if (!response.ok) {
+      console.log("test", response)
+      throw new Error('Failed to fetch data');
+    }
+    const users = await response.json();
+    
     res.json(users);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch users' });
@@ -30,12 +36,28 @@ router.get('/', async (req: Request, res: Response) => {
 
 router.post('/', async (req: Request, res: Response) => {
   const { name, email } = req.body;
+  const userData: Prisma.UserCreateInput = {
+    name: '',
+    username: '',
+    email: '',
+    street: '',
+    suite: '',
+    city: '',
+    zipcode: '',
+    lat: '',
+    lng: '',
+    phone: '',
+    website: '',
+    companyName: '',
+    catchPhrase: '',
+    bs: ''
+  };
+  
+  if (name) userData.name = name;
+  if (email) userData.email = email;
   try {
     const newUser = await prisma.user.create({
-      data: {
-        name,
-        email,
-      },
+      data: userData
     });
     res.json(newUser);
   } catch (error) {
@@ -43,16 +65,20 @@ router.post('/', async (req: Request, res: Response) => {
   }
 });
 
+
 router.put('/:id', async (req: Request, res: Response) => {
   const userId = parseInt(req.params.id, 10);
   const { name, email } = req.body;
+  
+  const userData: Prisma.UserUpdateInput = {};
+  
+  if (name) userData.name = name;
+  if (email) userData.email = email;
+
   try {
     const updatedUser = await prisma.user.update({
       where: { id: userId },
-      data: {
-        name,
-        email,
-      },
+      data: userData, // Pass the constructed object here
     });
     res.json(updatedUser);
   } catch (error) {

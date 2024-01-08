@@ -14,6 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const client_1 = require("@prisma/client");
+const fetch = require('node-fetch');
 const prisma = new client_1.PrismaClient();
 const router = express_1.default.Router();
 router.get('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -33,7 +34,12 @@ router.get('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () 
 }));
 router.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const users = yield prisma.user.findMany();
+        const response = yield fetch('https://jsonplaceholder.typicode.com/users');
+        if (!response.ok) {
+            console.log("test", response);
+            throw new Error('Failed to fetch data');
+        }
+        const users = yield response.json();
         res.json(users);
     }
     catch (error) {
@@ -42,12 +48,29 @@ router.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 }));
 router.post('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { name, email } = req.body;
+    const userData = {
+        name: '',
+        username: '',
+        email: '',
+        street: '',
+        suite: '',
+        city: '',
+        zipcode: '',
+        lat: '',
+        lng: '',
+        phone: '',
+        website: '',
+        companyName: '',
+        catchPhrase: '',
+        bs: ''
+    };
+    if (name)
+        userData.name = name;
+    if (email)
+        userData.email = email;
     try {
         const newUser = yield prisma.user.create({
-            data: {
-                name,
-                email,
-            },
+            data: userData
         });
         res.json(newUser);
     }
@@ -58,13 +81,15 @@ router.post('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
 router.put('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = parseInt(req.params.id, 10);
     const { name, email } = req.body;
+    const userData = {};
+    if (name)
+        userData.name = name;
+    if (email)
+        userData.email = email;
     try {
         const updatedUser = yield prisma.user.update({
             where: { id: userId },
-            data: {
-                name,
-                email,
-            },
+            data: userData, // Pass the constructed object here
         });
         res.json(updatedUser);
     }

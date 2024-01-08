@@ -1,4 +1,4 @@
-import express from 'express';
+import express = require('express');
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 
